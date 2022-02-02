@@ -83,7 +83,16 @@ NOTE: assumes there is no user with this index already
 
 user_t *system_user_new( char *user_index_str, char *name )
 {
-  return (user_t *)NULL;
+  if (users.userct == MAX_USERS) {
+    return (user_t *) NULL;
+  }
+  int user_index = atoi(user_index_str);
+  user_t *new_user = (user_t *) malloc(sizeof(user_t));
+  users.members[users.userct] = new_user;
+  users.userct++;
+  new_user->id = user_index;
+  memcpy(new_user->name, name, MAX_STRING);
+  return new_user;
 }
 
 
@@ -209,6 +218,7 @@ USER_NEW, which creates a user object.
 
 int apply_command( user_t *user, int cmd, char *args )
 {
+  printf("calling apply_command\n");
   char arg1[MAX_STRING], arg2[MAX_STRING], arg3[MAX_STRING], arg4[MAX_STRING];
   int res;
   
@@ -303,9 +313,21 @@ function pointer for the question type to perform any updates on the
 question.
 
 ******************************************************************************/
+int user_add_q( user_t *user, char *question_index, char *question_type, char *question, char *answer ){
+  
+}
+int user_remove_q( user_t *user, char *question_index ){
 
+}
+int user_change_q( user_t *user, char *question_index, char *question, char *answer ){
 
+}
+int user_link_q( user_t *user, char *question_index, char *other_question_index ){
 
+}
+int user_login( user_t *user, char *question_index ){
+
+}
 
 
 
@@ -428,12 +450,21 @@ int main( int argc, char *argv[] )
   // get input - line-by-line from the input file
   // get input - line-by-line from the input file
 
+  line = (char *) malloc(MAX_LINE);
   while (1) {  // TBD (1): get a line of input from the input file
+
+    bzero(line, MAX_LINE);
+    char* status = fgets(line, len, ifile);
+    if (status == NULL) {
+      break;
+    }
+
     cmdstr = line;
-	  
-    // determine command from command string (first arg in line)
+	  printf("Here %s\n", line);
+    // etermine command from command string (first arg in line)
 
     cmd = find_command( cmdstr, strlen( cmdstr ));
+
     if ( cmd == USER_SKIP ) {
       continue;
     }
@@ -444,7 +475,27 @@ int main( int argc, char *argv[] )
 	  
     // TBD (2): copy <user_index> from cmdstr into user_index_str
 
+
     // get the user object
+    
+
+    int first_space = 0;
+    char space = ' ';
+    while (cmdstr[first_space] != space) {
+      first_space++;
+    }
+    first_space++;
+
+    int second_space = first_space;
+    while (cmdstr[second_space] != space) {
+      second_space++;
+    }
+
+    memcpy(user_index_str, cmdstr + first_space, second_space - first_space);
+
+    
+
+
     user = find_user( user_index_str, cmd );  
     if (( user == NULL ) && ( cmd != USER_NEW )) {
       fprintf( ofile, "ERR: Unknown user: %s", line );
@@ -455,6 +506,8 @@ int main( int argc, char *argv[] )
 
     // apply the command
     // user new is special
+    args = cmdstr + second_space + 1;
+
     if ( cmd == USER_NEW ) {
       user = system_user_new( user_index_str, args );
     }
@@ -464,8 +517,9 @@ int main( int argc, char *argv[] )
       fprintf( ofile, "ERR: failed command: cmd %d for %s(%d) for line %s\n", cmd, user->name, user->id, line );
       continue;
     }
+    // break;
   }
-
+  free(line);
   exit( 0 );
 }
 
