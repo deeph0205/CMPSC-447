@@ -7,8 +7,10 @@
 system_t users;
 FILE *ifile;
 FILE *ofile;
-
-
+user_t *global_user;
+char *global_question_index;
+int flag=0;
+int num_question;
 
 	       
 /******************************************************************************
@@ -87,11 +89,25 @@ user_t *system_user_new( char *user_index_str, char *name )
     return (user_t *) NULL;
   }
   int user_index = atoi(user_index_str);
+  if (users.members[user_index-1]!=(user_t *)NULL){
+    return (user_t *) NULL; 
+  }
   user_t *new_user = (user_t *) malloc(sizeof(user_t));
-  users.members[users.userct] = new_user;
+  for(int i=0;i<MAX_QUESTIONS;i++){
+    new_user->questions[i]=(question_t *)NULL;
+  }
+  users.members[user_index-1] = new_user;
   users.userct++;
   new_user->id = user_index;
   memcpy(new_user->name, name, MAX_STRING);
+  new_user->add_q=user_add_q;
+  new_user->change_q=user_change_q;
+  new_user->remove_q=user_remove_q;
+  new_user->link_q=user_link_q;
+  new_user->login=user_login;
+  new_user->qct=0;
+  // printf("id=%d\n",new_user->id);
+  // printf("name=%s\n",new_user->name);
   return new_user;
 }
 
@@ -314,19 +330,111 @@ question.
 
 ******************************************************************************/
 int user_add_q( user_t *user, char *question_index, char *question_type, char *question, char *answer ){
-  
+    // printf("hey\n");
+    // printf("name=%s\n",user->name);
+    // printf("id=%d\n",user->id);
+    // printf("type=%s\n",question_type);
+    if (user->qct==MAX_QUESTIONS){
+      return -1;
+    }
+    int question_index_int = atoi(question_index);
+    if (user->questions[question_index_int-1]!=(question_t *)NULL){
+      return -1;
+    }
+    user->qct+=1;
+    if (strcmp(question_type,"string")==0){
+        string_q *question_struct= (string_q *)malloc(sizeof(string_q));
+        user->questions[question_index_int-1]=(question_t *)question_struct;
+        question_struct->add=stringq_add;
+        question_struct->remove=question_remove;
+        question_struct->change=stringq_change;
+        question_struct->link=question_link;
+        question_struct->login=stringq_login;
+        
+        question_struct->type=0;
+        question_struct->add(question_struct,question_index_int,question,answer);
+    }
+    else{
+      
+        int_q *question_struct= (int_q *)malloc(sizeof(int_q));
+        user->questions[question_index_int-1]=(question_t *)question_struct;
+        question_struct->add=intq_add;
+        question_struct->remove=question_remove;
+        question_struct->change=intq_change;
+        question_struct->link=question_link;
+        question_struct->login=intq_login;
+    
+        int answer_int=atoi(answer);
+        
+        question_struct->type=1;
+        question_struct->add(question_struct,question_index_int,question,answer_int);
+    }
+    return 0;
 }
 int user_remove_q( user_t *user, char *question_index ){
+    int question_index_int=atoi(question_index);
+    if (user->questions[question_index_int-1]==(question_t *)NULL){
+      return -1;
+    }
+    question_t *question=user->questions[question_index_int-1];
+    if (question->partner!=(question_t *)NULL){
+      (question->partner)->partner=(question_t *)NULL;
+    }
+    free(user->questions[question_index_int-1]);
+    user->questions[question_index_int-1]=(question_t *)NULL;
+    user->qct-=1;
+    return 0;
 
 }
 int user_change_q( user_t *user, char *question_index, char *question, char *answer ){
+    int question_index_int=atoi(question_index);
+    if (user->questions[question_index_int-1]==(question_t *)NULL){
+      return -1;
+    }
+    if (user->questions[question_index_int-1]->type==0){
+        string_q *question_string=(string_q *)user->questions[question_index_int-1];
+        question_string->change(question_string,question,answer);
 
+    }
+    else{
+        int_q *question_int=(int_q *)user->questions[question_index_int-1];
+        int answer_int=atoi(answer);
+        question_int->change(question_int,question,answer_int);
+    }
+    return 0;
 }
 int user_link_q( user_t *user, char *question_index, char *other_question_index ){
+    int question_index_int=atoi(question_index);
+    int other_question_index_int=atoi(other_question_index);
+    if(user->questions[question_index_int-1]==(question_t *)NULL || user->questions[other_question_index_int-1]==(question_t *)NULL){
+      return -1;
+    }
+    question_t *question=user->questions[question_index_int-1];
+    question_t *other_question=user->questions[other_question_index_int-1];
+    if (question->partner!=(question_t *)NULL){
+      (question->partner)->partner=(question_t *)NULL;
+    }
+    if (other_question->partner!=(question_t *)NULL){
+      (other_question->partner)->partner=(question_t *)NULL;
+    }
+    question->partner=other_question;
+    other_question->partner=question;
+    return 0;
 
 }
 int user_login( user_t *user, char *question_index ){
+    // int question_index_int=atoi(question_index);
+    // if (user->questions[question_index_int-1]==(question_t *)NULL){
+    //   return -1;
+    // }
+    // question_t *question=user->questions[question_index_int-1];
+    // if (question->partner==(question_t *)NULL){
+        
+    // }
+    // else{
+      
 
+    // }
 }
 
 
@@ -391,7 +499,52 @@ function pointer fields in the int_q and string_q data structures.
    int (*login) ( struct string_question *sq );
 
 ******************************************************************************/
+int question_remove( question_t *q ){
 
+}
+int question_link( question_t *q, question_t *other ){
+
+}
+int intq_add( int_q *iq, int qindex, char *question, int answer ){
+    iq->index=qindex;
+    strcpy(iq->question,question);
+    iq->answer=answer;
+    iq->partner=(question_t *)NULL;
+    return 0;
+    // printf("type=%d\n",iq->type);
+    // printf("index=%d\n",iq->index);
+    // printf("questiom=%s\n",iq->question);
+    // printf("answer=%d\n",iq->answer);
+
+}
+int intq_change( int_q *iq, char *question, int answer ){
+
+    strcpy(iq->question,question);
+    iq->answer=answer;
+    return 0;
+}
+int intq_login( int_q *iq ){
+
+}
+int stringq_add( string_q *sq, int qindex, char *question, char *answer ){
+    sq->index=qindex;
+    strcpy(sq->question,question);
+    strcpy(sq->answer,answer);
+    sq->partner=(question_t *)NULL;
+    return 0;
+    // printf("type=%d\n",sq->type);
+    // printf("index=%d\n",sq->index);
+    // printf("questiom=%s\n",sq->question);
+    // printf("answer=%s\n",sq->answer);
+}
+int stringq_change( string_q *sq, char *question, char *answer ){
+    strcpy(sq->question,question);
+    strcpy(sq->answer,answer);
+    return 0;
+}
+int stringq_login( string_q *sq ){
+
+}
 
 
 
@@ -420,6 +573,10 @@ Complete the "TBD(x)" functionality below for these three cases.
 
 int main( int argc, char *argv[] )
 {
+  for(int i=0;i<MAX_USERS;i++){
+    users.members[i]=(user_t *)NULL;
+  }
+
   user_t *user;
   FILE *file;
   char *line = (char *)NULL;
@@ -460,7 +617,7 @@ int main( int argc, char *argv[] )
     }
 
     cmdstr = line;
-	  printf("Here %s\n", line);
+
     // etermine command from command string (first arg in line)
 
     cmd = find_command( cmdstr, strlen( cmdstr ));
@@ -511,6 +668,7 @@ int main( int argc, char *argv[] )
     if ( cmd == USER_NEW ) {
       user = system_user_new( user_index_str, args );
     }
+    
     res = apply_command( user, cmd, args );
 	  
     if ( res < 0 ) {
