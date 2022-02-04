@@ -7,60 +7,49 @@
 system_t users;
 FILE *ifile;
 FILE *ofile;
-user_t *global_user;
-char *global_question_index;
-int flag=0;
-int num_question;
+char *cmdstr;         // I changed cmdstr in main and turned it into global pointer.
+// user_t *global_user;
+// char *global_question_index;
+// int flag=0;
+// int num_question;
 
 	       
 /******************************************************************************
-
 Project 1 Commands:
-
 user <user_index> <name> 
   Add user of <user_index> and <name> to set of users in the system_t 
   data structure "users" (global) field "members" and update count in
   "userct".  Users cannot be deleted once added.
-
 add <user_index> <question_index> <question_type> <question> <answer(s)>
-
   Add a new question (<question_type> <question> <answer(s)>) of
   <question_index> for user of <user_index> and add to the "questions"
   field in the user data structure and update the count field "qct".
   Allocate a new question of appropriate data type (<question_type>,
   either int_q or string_q) and initialize all the fields in the
   question data structure.
-
 remove <user_index> <question_index>
-
   Remove question of <question_index> for user of <user_index>.
   Remove the question from the user data structure ("questions") and
   decrement the count.  Do not worry about leaving any open spaces in
   the questions array.  You must deallocate the question data
   structure. 
-
 change <user_index> <question_index> <question> <answer(s)>
  
   Change question ( <question> <answer(s)>) for <question_index> for
   user of <user_index>.  Replace the "question" and "answer" fields in
   the question data structure.  We cannot change the "question type".
-
 partner <user_index> <question_index_1> <question_index_2>
-
   Link <question_index_1> and <question_index_2> for authentication
   for user of <user_index> using the field "partner".  Both questions
   must be updated to reflect their partnership.  A question can have
   only one partner, so must update the old partner if a change is
   made.  NOTE: Both questions must be answered if one is chosen at
   login time.
-
 login <user_index> <question_index>
-
   See if user of <user_index> can answer authentication question
   <question_index> correctly.  If the question chosen has a partner,
   then this question and the partner question (i.e., two questions)
   must be answered successfully to authenticate.
-
 *******************************************************************************/
 
 
@@ -68,19 +57,14 @@ login <user_index> <question_index>
 
 
 /******************************************************************************
-
 Task 1: create a new user
-
 Function: system_user_new
 Input Args: 
           user_index_str - string for the user index value for the new user
           name - name string for the user
 Returns: a new user object or NULL
-
 system_user_new creates a new user of index <user_index> and name <name>.
-
 NOTE: assumes there is no user with this index already
-
 *******************************************************************************/
 
 user_t *system_user_new( char *user_index_str, char *name )
@@ -113,13 +97,10 @@ user_t *system_user_new( char *user_index_str, char *name )
 
 
 /******************************************************************************
-
 High-level Command Processing Functions: provided
-
 *******************************************************************************/
 
 /******************************************************************************
-
 Function: find_command
 Input Args: 
           cmdbuf - buffer for the command line from the input file
@@ -128,7 +109,6 @@ Returns: a command index or an error value (<0)
          
 find_command determines the specific command and checks the argument
 count.
-
 *******************************************************************************/
 
 
@@ -185,7 +165,6 @@ int find_command( char *cmdbuf, int len )
 
 
 /******************************************************************************
-
 Function: find_user
 Input Args: 
           user_index_str - the index as a string
@@ -194,7 +173,6 @@ Returns: a user reference or NULL
          
 find_user find the user correpsonding to the index value from 
 <user_index_str>, if one exists.
-
 *******************************************************************************/
 
 user_t *find_user( char *user_index_str, int cmd )
@@ -219,7 +197,6 @@ user_t *find_user( char *user_index_str, int cmd )
 
 
 /******************************************************************************
-
 Function: apply_command
 Input Args: 
           user - user object (may be NULL for USER_NEW)
@@ -229,7 +206,6 @@ Returns: 0 on success and <0 on error
          
 Run the respective command on the user object with the exception of
 USER_NEW, which creates a user object.
-
 *******************************************************************************/
 
 int apply_command( user_t *user, int cmd, char *args )
@@ -300,25 +276,20 @@ int apply_command( user_t *user, int cmd, char *args )
 /******************************************************************************
   
   Task 2: implement user commands (see interface below)
-
 User Command Interface (from cmpsc447-user.h):
-
 extern int user_add_q( user_t *user, char *question_index, char *question_type, char *question, char *answer );
 extern int user_remove_q( user_t *user, char *question_index );
 extern int user_change_q( user_t *user, char *question_index, char *question, char *answer );
 extern int user_link_q( user_t *user, char *question_index, char *other_question_index );
 extern int user_login( user_t *user, char *question_index );
-
 Note that these functions need to be assigned to the corresponding
 function pointer fields in the user_t data structure
-
   int (*add_q) ( struct user_type *user, char *question_index, char *question_type,
    	            char *question, char *answer );
   int (*remove_q) ( struct user_type *user, char *question_index );
   int (*change_q) ( struct user_type *user, char *question_index, char *question, char *answer );
   int (*link_q) ( struct user_type *user, char *question_index, char *other_question_index );
   int (*login) ( struct user_type *user, char *question_index );
-
 These functions should implement: (1) the actions that update the
 user_t data structure (if needed); (2) find a reference to the
 appropriate question to update for the user (from the
@@ -327,7 +298,6 @@ from the field qtype in the question; (4) create a reference to the
 specific question type; and (5) invoke the appropriate (corresponding)
 function pointer for the question type to perform any updates on the
 question.
-
 ******************************************************************************/
 int user_add_q( user_t *user, char *question_index, char *question_type, char *question, char *answer ){
     // printf("hey\n");
@@ -432,9 +402,73 @@ int user_login( user_t *user, char *question_index ){
         
     // }
     // else{
+    int question_index_int=atoi(question_index);
+    int first_q = 100;
+    
+    if (user->questions[question_index_int-1]==(question_t *)NULL){
+      return -1;
+    }
+
+    //   No Partner Logins
+    if (user->questions[question_index_int-1]->partner ==( question_t *)NULL){
+      if (user->questions[question_index_int -1]->type == 0){
+        string_q *question_string=(string_q *)user->questions[question_index_int-1];
+        first_q = question_string->login(question_string);
+
+      }
+      else{
+        int_q *question_int=(int_q *)user->questions[question_index_int-1];
+        first_q = question_int->login(question_int);
+      }
+      return first_q;
+    }
+
+    else {
+
+      question_t *question=user->questions[question_index_int-1];
+
+      if (user->questions[question_index_int -1]->type == 0){
+        string_q *question_string=(string_q *)user->questions[question_index_int-1];
+        first_q = question_string->login(question_string);
+      }
+      else{
+        int_q *question_int=(int_q *)user->questions[question_index_int-1];
+        first_q = question_int->login(question_int);
+      }
+
+      if (first_q == -1) {
+        return -1;
+      }
+      else {
+        if ((question->partner)->type == 0) {
+        string_q *question_string=(string_q *)question->partner;
+        first_q = question_string->login(question_string);
+
+        }
+        else {
+          int_q *question_int=(int_q *)question->partner;
+          first_q = question_int->login(question_int);
+          
+        }
+      
+      }
+      if (first_q == -1) {
+        return -1;
+      }
+      else {
+        return 0;
+      }
+
+
+    }
       
 
     // }
+    // printf("The line is %s \n", cmdstr);
+
+    // char *read_input = fgets(cmdstr,MAX_LINE, ifile);
+
+    // printf("The line is %s \n", read_input);
 }
 
 
@@ -442,11 +476,8 @@ int user_login( user_t *user, char *question_index ){
 
 
 /******************************************************************************
-
   Task 3: Implement question interface
-
 Question Command Interface (from cmpsc447-user.h):
-
 extern int question_remove( question_t *q );
 extern int question_link( question_t *q, question_t *other );
 extern int intq_add( int_q *iq, int qindex, char *question, int answer );
@@ -455,17 +486,12 @@ extern int intq_login( int_q *iq );
 extern int stringq_add( string_q *sq, int qindex, char *question, char *answer );
 extern int stringq_change( string_q *sq, char *question, char *answer );
 extern int stringq_login( string_q *sq );
-
 Note that these functions need to be assigned to the corresponding
 function pointer fields in the int_q and string_q data structures.
-
    (1) Both int_q and string_q:
-
    extern int question_remove( question_t *q );
    extern int question_link( question_t *q, question_t *other );
-
        are assigned to
-
    string_q:
    int (*remove) ( question_t *sq );
    int (*link) ( question_t *sq, question_t *other ); 
@@ -473,31 +499,22 @@ function pointer fields in the int_q and string_q data structures.
    int: 
    int (*remove) ( question_t *iq );
    int (*link) ( question_t *iq, question_t *other );  
-
    (2) For int_q only:
-
    extern int intq_add( int_q *iq, int qindex, char *question, int answer );
    extern int intq_change( int_q *iq, char *question, int answer );
    extern int intq_login( int_q *iq );
-
        are assigned to 
-
    int (*add) ( struct int_question *iq, int qtype, char *question, int answer );
    int (*change) ( struct int_question *iq, char *question, int answer );
    int (*login) ( struct int_question *iq );
-
    (3) for string_q only:
-
    extern int stringq_add( string_q *sq, int qindex, char *question, char *answer );
    extern int stringq_change( string_q *sq, char *question, char *answer );
    extern int stringq_login( string_q *sq );
-
        are assigned to 
-
    int (*add) ( struct string_question *sq, int qtype, char *question, char *answer );
    int (*change) ( struct string_question *sq, char *question, char *answer );
    int (*login) ( struct string_question *sq );
-
 ******************************************************************************/
 int question_remove( question_t *q ){
 
@@ -524,8 +541,17 @@ int intq_change( int_q *iq, char *question, int answer ){
     return 0;
 }
 int intq_login( int_q *iq ){
-
+    char *read_input = fgets(cmdstr,MAX_LINE, ifile);
+    int read_input_int = atoi(read_input);
+    if ( iq->answer == read_input_int) {
+      return 0;
+    }
+    else {
+      return -1;
+    }
+    
 }
+
 int stringq_add( string_q *sq, int qindex, char *question, char *answer ){
     sq->index=qindex;
     strcpy(sq->question,question);
@@ -537,38 +563,45 @@ int stringq_add( string_q *sq, int qindex, char *question, char *answer ){
     // printf("questiom=%s\n",sq->question);
     // printf("answer=%s\n",sq->answer);
 }
+
 int stringq_change( string_q *sq, char *question, char *answer ){
     strcpy(sq->question,question);
     strcpy(sq->answer,answer);
     return 0;
 }
-int stringq_login( string_q *sq ){
 
+int stringq_login( string_q *sq ){
+    char *read_input = fgets(cmdstr,MAX_LINE, ifile);
+    int cch = strlen(read_input);
+    if (cch > 1 && read_input[cch-1] == '\n') {
+      read_input[cch-1] = '\0';
+    }
+
+    if (strcmp(sq->answer,read_input) == 0) {
+      return 0;
+    }
+    else {
+      return -1;
+    }
+    
 }
 
 
 
 /******************************************************************************
-
 Task 4: command processing from input file
-
 Function: main
-
 Input Args: 
           argc - The number of command line arguments (3)
           argv - Command line arguments ( cmpsc447-p1 <input_file> <output_file>
 Returns: exit status
-
 Main runs the sequence of commands listed in <input_file> and stores the 
 results of the commands in <output_file>.  The output fprintf statements
 are provided.
-
 NOTE: Need to complete three fragments of this function to: (1) get input from
 the input file; (2) compute a reference to the <user_index> string for find_user;
 and (3) compute a reference to the arguments list for apply_command.
-
 Complete the "TBD(x)" functionality below for these three cases.
-
 *******************************************************************************/
 
 int main( int argc, char *argv[] )
@@ -581,7 +614,7 @@ int main( int argc, char *argv[] )
   FILE *file;
   char *line = (char *)NULL;
   int cmd;
-  char *cmdstr, *args;
+  char *args;
   int res;
   int len = MAX_LINE;
   char user_index_str[MAX_STRING];
@@ -617,10 +650,10 @@ int main( int argc, char *argv[] )
     }
 
     cmdstr = line;
-
     // etermine command from command string (first arg in line)
 
     cmd = find_command( cmdstr, strlen( cmdstr ));
+    
 
     if ( cmd == USER_SKIP ) {
       continue;
@@ -680,5 +713,3 @@ int main( int argc, char *argv[] )
   free(line);
   exit( 0 );
 }
-
-
