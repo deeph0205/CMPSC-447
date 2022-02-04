@@ -1,0 +1,30 @@
+user 1 prof
+user 2 student
+add 1 1 string flavor mint
+add 2 1 string flavor butterscotch
+add 2 2 int lucky 12
+add 1 2 int zipcode 16802
+add 1 3 string dog_breed beagle
+add 1 3 int dog_breed 42
+# no string values for integer questions
+add 1 4 int unlucky six-hundred
+# second add of question 3 for user 1 (prof) should fail
+change 7 2 area_code 814
+# change of question for unknown user (7) should fail
+change 1 7 area_code 212
+# change of question for known user (1) but unknown question (7) should fail
+partner 1 3 5
+# partner with known user (1) and question (3) for unknown question (5) should fail
+remove 1 4 
+# remove of unknown question (4) for known user (1) should fail
+login 1 3
+beagle
+partner 1 3 1
+remove 1 1 
+login 1 3
+beagle
+# should work with only question 3 (partner of 3 deleted)
+login 2 2
+12
+# no need for second entry to login since no partner for question 2 for student(2) 
+butterscotch
