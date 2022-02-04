@@ -1,3 +1,14 @@
+
+# User API: op <user_index> <domain_index> <args>
+
+# Commands: 
+# user <user_index> <name>
+# add <user_index> <question_index> <question_type> <question> <answer(s)>
+# remove <user_index> <question_index>
+# change <user_index> <question_index> <question> <answer(s)>
+# partner <user_index> <question_index_1> <question_index_2>
+# login <user_index> <question_index>
+
 user 1 prof
 user 2 student
 add 1 1 string flavor mint

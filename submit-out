@@ -1,0 +1,22 @@
+USER_NEW prof with index 1 : result 0
+USER_NEW student with index 2 : result 0
+USER_ADD prof
+(1) for question 1 string flavor mint : result 0
+USER_ADD student
+(2) for question 1 string flavor butterscotch : result 0
+USER_ADD student
+(2) for question 2 int lucky 12 : result 0
+USER_ADD prof
+(1) for question 2 int zipcode 16802 : result 0
+USER_ADD prof
+(1) for question 3 string dog_breed beagle : result 0
+USER_REMOVE prof
+(1) question of index 3 : result 0
+USER_CHANGE prof
+(1) for question 2 area_code 814 : result 0
+USER_LINK prof
+(1) question #1 to question #2 : result 0
+USER_LOGIN for user prof
+(1) with question 2 gives login result: Success
+USER_LOGIN for user student
+(2) with question 2 gives login result: Success

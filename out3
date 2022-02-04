@@ -15,7 +15,7 @@ ERR: failed command: cmd 2 for prof(1) for line change 1 7 area_code 212
 USER_LINK prof(1) question #3 to question #5 : result -1
 ERR: failed command: cmd 4 for prof(1) for line partner 1 3 5
 USER_REMOVE prof(1) question of index 4 : result -1
-ERR: failed command: cmd 1 for prof(1) for line remove 1 4
+ERR: failed command: cmd 1 for prof(1) for line remove 1 4 
 USER_LOGIN for user prof(1) with question 3 gives login result: Success
 USER_LINK prof(1) question #3 to question #1 : result 0
 USER_REMOVE prof(1) question of index 1 : result 0

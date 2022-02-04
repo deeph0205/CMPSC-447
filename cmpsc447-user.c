@@ -2,16 +2,13 @@
 #include <string.h>
 #include <stdlib.h>
 #include <fcntl.h>
+#include <ctype.h>
 #include "cmpsc447-user.h"
 
 system_t users;
 FILE *ifile;
 FILE *ofile;
 char *cmdstr;         // I changed cmdstr in main and turned it into global pointer.
-// user_t *global_user;
-// char *global_question_index;
-// int flag=0;
-// int num_question;
 
 	       
 /******************************************************************************
@@ -90,8 +87,6 @@ user_t *system_user_new( char *user_index_str, char *name )
   new_user->link_q=user_link_q;
   new_user->login=user_login;
   new_user->qct=0;
-  // printf("id=%d\n",new_user->id);
-  // printf("name=%s\n",new_user->name);
   return new_user;
 }
 
@@ -210,7 +205,6 @@ USER_NEW, which creates a user object.
 
 int apply_command( user_t *user, int cmd, char *args )
 {
-  printf("calling apply_command\n");
   char arg1[MAX_STRING], arg2[MAX_STRING], arg3[MAX_STRING], arg4[MAX_STRING];
   int res;
   
@@ -299,11 +293,19 @@ specific question type; and (5) invoke the appropriate (corresponding)
 function pointer for the question type to perform any updates on the
 question.
 ******************************************************************************/
+
+int isNumber(char s[])
+{
+    for (int i = 0; s[i]!= '\0'; i++)
+    {
+        if (isdigit(s[i]) == 0)
+              return 0;
+    }
+    return 1;
+}
+
 int user_add_q( user_t *user, char *question_index, char *question_type, char *question, char *answer ){
-    // printf("hey\n");
-    // printf("name=%s\n",user->name);
-    // printf("id=%d\n",user->id);
-    // printf("type=%s\n",question_type);
+
     if (user->qct==MAX_QUESTIONS){
       return -1;
     }
@@ -311,10 +313,11 @@ int user_add_q( user_t *user, char *question_index, char *question_type, char *q
     if (user->questions[question_index_int-1]!=(question_t *)NULL){
       return -1;
     }
-    user->qct+=1;
+    
     if (strcmp(question_type,"string")==0){
         string_q *question_struct= (string_q *)malloc(sizeof(string_q));
         user->questions[question_index_int-1]=(question_t *)question_struct;
+        user->qct+=1;
         question_struct->add=stringq_add;
         question_struct->remove=question_remove;
         question_struct->change=stringq_change;
@@ -325,9 +328,13 @@ int user_add_q( user_t *user, char *question_index, char *question_type, char *q
         question_struct->add(question_struct,question_index_int,question,answer);
     }
     else{
-      
+        int num_checker = isNumber(answer);
+        if (num_checker == 0) {
+          return -1;
+        }
         int_q *question_struct= (int_q *)malloc(sizeof(int_q));
         user->questions[question_index_int-1]=(question_t *)question_struct;
+        user->qct+=1;
         question_struct->add=intq_add;
         question_struct->remove=question_remove;
         question_struct->change=intq_change;
@@ -516,12 +523,16 @@ function pointer fields in the int_q and string_q data structures.
    int (*change) ( struct string_question *sq, char *question, char *answer );
    int (*login) ( struct string_question *sq );
 ******************************************************************************/
-int question_remove( question_t *q ){
 
+// Link and remove functions are handled directly from above function implementations of link and remove.
+int question_remove( question_t *q ){
+    return 0;
 }
 int question_link( question_t *q, question_t *other ){
-
+    return 0;
 }
+
+
 int intq_add( int_q *iq, int qindex, char *question, int answer ){
     iq->index=qindex;
     strcpy(iq->question,question);

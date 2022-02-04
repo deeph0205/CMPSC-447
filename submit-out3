@@ -1,0 +1,49 @@
+USER_NEW prof with index 1 : result 0
+USER_NEW student with index 2 : result 0
+USER_ADD prof
+(1) for question 1 string flavor mint : result 0
+USER_ADD student
+(2) for question 1 string flavor butterscotch : result 0
+USER_ADD student
+(2) for question 2 int lucky 12 : result 0
+USER_ADD prof
+(1) for question 2 int zipcode 16802 : result 0
+USER_ADD prof
+(1) for question 3 string dog_breed beagle : result 0
+USER_ADD prof
+(1) for question 3 int dog_breed 42 : result -1
+ERR: failed command: cmd 0 for prof
+(1) for line add 1 3 int dog_breed 42
+
+USER_ADD prof
+(1) for question 4 int unlucky six-hundred : result -1
+ERR: failed command: cmd 0 for prof
+(1) for line add 1 4 int unlucky six-hundred
+
+ERR: Unknown user: change 7 2 area_code 814
+USER_CHANGE prof
+(1) for question 7 area_code 212 : result -1
+ERR: failed command: cmd 2 for prof
+(1) for line change 1 7 area_code 212
+
+USER_LINK prof
+(1) question #3 to question #5 : result -1
+ERR: failed command: cmd 4 for prof
+(1) for line partner 1 3 5
+
+USER_REMOVE prof
+(1) question of index 4 : result -1
+ERR: failed command: cmd 1 for prof
+(1) for line remove 1 4 
+
+USER_LOGIN for user prof
+(1) with question 3 gives login result: Success
+USER_LINK prof
+(1) question #3 to question #1 : result 0
+USER_REMOVE prof
+(1) question of index 1 : result 0
+USER_LOGIN for user prof
+(1) with question 3 gives login result: Success
+USER_LOGIN for user student
+(2) with question 2 gives login result: Success
+ERR: invalid command line: butterscotch
