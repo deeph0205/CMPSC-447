@@ -5,10 +5,12 @@
 #include <ctype.h>
 #include "cmpsc447-user.h"
 
+
+/// Name: Deep Harkhani           CMPSC 447 Project 1 2FA 
+
 system_t users;
 FILE *ifile;
 FILE *ofile;
-char *cmdstr;         // I changed cmdstr in main and turned it into global pointer.
 
 	       
 /******************************************************************************
@@ -74,13 +76,18 @@ user_t *system_user_new( char *user_index_str, char *name )
     return (user_t *) NULL; 
   }
   user_t *new_user = (user_t *) malloc(sizeof(user_t));
+
+  // Initialize all pointers to NULL in questions array. 
   for(int i=0;i<MAX_QUESTIONS;i++){
     new_user->questions[i]=(question_t *)NULL;
   }
-  users.members[user_index-1] = new_user;
+  users.members[users.userct] = new_user;
   users.userct++;
   new_user->id = user_index;
-  memcpy(new_user->name, name, MAX_STRING);
+
+  snprintf(new_user->name, MAX_STRING, "%s", name);
+
+  // assign function pointers
   new_user->add_q=user_add_q;
   new_user->change_q=user_change_q;
   new_user->remove_q=user_remove_q;
@@ -213,7 +220,14 @@ int apply_command( user_t *user, int cmd, char *args )
     if (( sscanf( args, "%s", arg1 )) != 1 ) {
 	return -1;
     }
-    res = (( user != NULL ) ? 0 : 1 );
+    res = (( user != NULL ) ? 0 : -1 );
+
+    if (user == NULL) {
+      fprintf(ofile, "USER_NEW %s : result %d\n", arg1, res);
+      return res;
+      break;
+    }
+
     fprintf( ofile, "USER_NEW %s with index %d : result %d\n", arg1, user->id, res );
     return res;
     break;
@@ -310,11 +324,17 @@ int user_add_q( user_t *user, char *question_index, char *question_type, char *q
       return -1;
     }
     int question_index_int = atoi(question_index);
+
+    if (question_index_int > MAX_QUESTIONS || question_index_int < 1) {
+      return -1;
+    }
+
     if (user->questions[question_index_int-1]!=(question_t *)NULL){
       return -1;
     }
     
-    if (strcmp(question_type,"string")==0){
+    // Add question of type string.
+    if (strncmp(question_type,"string",7)==0){
         string_q *question_struct= (string_q *)malloc(sizeof(string_q));
         user->questions[question_index_int-1]=(question_t *)question_struct;
         user->qct+=1;
@@ -326,9 +346,11 @@ int user_add_q( user_t *user, char *question_index, char *question_type, char *q
         
         question_struct->type=0;
         question_struct->add(question_struct,question_index_int,question,answer);
+        return 0;
     }
-    else{
-        int num_checker = isNumber(answer);
+    // Add question of type int.
+    else if (strncmp(question_type,"int",4)==0){
+        int num_checker = isNumber(answer);   // Check the string is an int.
         if (num_checker == 0) {
           return -1;
         }
@@ -345,19 +367,26 @@ int user_add_q( user_t *user, char *question_index, char *question_type, char *q
         
         question_struct->type=1;
         question_struct->add(question_struct,question_index_int,question,answer_int);
+        return 0;
     }
-    return 0;
+    return -1;
+
 }
 int user_remove_q( user_t *user, char *question_index ){
     int question_index_int=atoi(question_index);
+
+    if (question_index_int > MAX_QUESTIONS || question_index_int < 1) {
+      return -1;
+    }
+    // remove for question previously not defined should fail.
     if (user->questions[question_index_int-1]==(question_t *)NULL){
       return -1;
     }
-    question_t *question=user->questions[question_index_int-1];
+    question_t *question=user->questions[question_index_int-1];      // If partner is not null, set partner's partner value to NULL.
     if (question->partner!=(question_t *)NULL){
       (question->partner)->partner=(question_t *)NULL;
     }
-    free(user->questions[question_index_int-1]);
+    free(user->questions[question_index_int-1]);      // Free the struct
     user->questions[question_index_int-1]=(question_t *)NULL;
     user->qct-=1;
     return 0;
@@ -365,14 +394,22 @@ int user_remove_q( user_t *user, char *question_index ){
 }
 int user_change_q( user_t *user, char *question_index, char *question, char *answer ){
     int question_index_int=atoi(question_index);
+
+    if (question_index_int > MAX_QUESTIONS || question_index_int < 1) {
+      return -1;
+    }
+
     if (user->questions[question_index_int-1]==(question_t *)NULL){
       return -1;
     }
+
+    // String change
     if (user->questions[question_index_int-1]->type==0){
         string_q *question_string=(string_q *)user->questions[question_index_int-1];
         question_string->change(question_string,question,answer);
 
     }
+    // Int change
     else{
         int_q *question_int=(int_q *)user->questions[question_index_int-1];
         int answer_int=atoi(answer);
@@ -383,11 +420,18 @@ int user_change_q( user_t *user, char *question_index, char *question, char *ans
 int user_link_q( user_t *user, char *question_index, char *other_question_index ){
     int question_index_int=atoi(question_index);
     int other_question_index_int=atoi(other_question_index);
-    if(user->questions[question_index_int-1]==(question_t *)NULL || user->questions[other_question_index_int-1]==(question_t *)NULL){
+
+    if (question_index_int > MAX_QUESTIONS || question_index_int < 1 || other_question_index_int > MAX_QUESTIONS || other_question_index_int < 1) {
       return -1;
+    }
+
+    if(user->questions[question_index_int-1]==(question_t *)NULL || user->questions[other_question_index_int-1]==(question_t *)NULL){  
+      return -1;                        // Questions dont exist for partner up.
     }
     question_t *question=user->questions[question_index_int-1];
     question_t *other_question=user->questions[other_question_index_int-1];
+    
+    // Update partners if new partner is assigned to same question.
     if (question->partner!=(question_t *)NULL){
       (question->partner)->partner=(question_t *)NULL;
     }
@@ -400,17 +444,13 @@ int user_link_q( user_t *user, char *question_index, char *other_question_index 
 
 }
 int user_login( user_t *user, char *question_index ){
-    // int question_index_int=atoi(question_index);
-    // if (user->questions[question_index_int-1]==(question_t *)NULL){
-    //   return -1;
-    // }
-    // question_t *question=user->questions[question_index_int-1];
-    // if (question->partner==(question_t *)NULL){
-        
-    // }
-    // else{
+
     int question_index_int=atoi(question_index);
     int first_q = 100;
+
+    if (question_index_int > MAX_QUESTIONS || question_index_int < 1) {
+      return -1;
+    }
     
     if (user->questions[question_index_int-1]==(question_t *)NULL){
       return -1;
@@ -431,7 +471,7 @@ int user_login( user_t *user, char *question_index ){
     }
 
     else {
-
+      //   Partnered up login 
       question_t *question=user->questions[question_index_int-1];
 
       if (user->questions[question_index_int -1]->type == 0){
@@ -440,7 +480,7 @@ int user_login( user_t *user, char *question_index ){
       }
       else{
         int_q *question_int=(int_q *)user->questions[question_index_int-1];
-        first_q = question_int->login(question_int);
+        first_q = question_int->login(question_int);       // flag variable to represent login should fail
       }
 
       if (first_q == -1) {
@@ -462,20 +502,12 @@ int user_login( user_t *user, char *question_index ){
       if (first_q == -1) {
         return -1;
       }
-      else {
+      else {    // If both answers matched during login.
         return 0;
       }
 
 
     }
-      
-
-    // }
-    // printf("The line is %s \n", cmdstr);
-
-    // char *read_input = fgets(cmdstr,MAX_LINE, ifile);
-
-    // printf("The line is %s \n", read_input);
 }
 
 
@@ -535,26 +567,33 @@ int question_link( question_t *q, question_t *other ){
 
 int intq_add( int_q *iq, int qindex, char *question, int answer ){
     iq->index=qindex;
-    strcpy(iq->question,question);
+    snprintf(iq->question, MAX_STRING, "%s", question);
     iq->answer=answer;
     iq->partner=(question_t *)NULL;
     return 0;
-    // printf("type=%d\n",iq->type);
-    // printf("index=%d\n",iq->index);
-    // printf("questiom=%s\n",iq->question);
-    // printf("answer=%d\n",iq->answer);
-
 }
 int intq_change( int_q *iq, char *question, int answer ){
 
-    strcpy(iq->question,question);
+    snprintf(iq->question, MAX_STRING, "%s", question);
     iq->answer=answer;
     return 0;
 }
 int intq_login( int_q *iq ){
-    char *read_input = fgets(cmdstr,MAX_LINE, ifile);
-    int read_input_int = atoi(read_input);
-    if ( iq->answer == read_input_int) {
+
+    int read_input;
+    char *line = NULL;
+    size_t len = 0;
+
+    if (getline(&line, &len, ifile) == -1) {
+      return -1;
+    }
+
+    if (!(strcspn(line, "\n") == 0)) {
+      line[strcspn(line, "\n")] = 0;
+    }
+
+    read_input= atoi(line);
+    if ( iq->answer == read_input) {
       return 0;
     }
     else {
@@ -565,30 +604,33 @@ int intq_login( int_q *iq ){
 
 int stringq_add( string_q *sq, int qindex, char *question, char *answer ){
     sq->index=qindex;
-    strcpy(sq->question,question);
-    strcpy(sq->answer,answer);
+    snprintf(sq->question, MAX_STRING, "%s", question);
+    snprintf(sq->answer, MAX_STRING, "%s", answer);
     sq->partner=(question_t *)NULL;
     return 0;
-    // printf("type=%d\n",sq->type);
-    // printf("index=%d\n",sq->index);
-    // printf("questiom=%s\n",sq->question);
-    // printf("answer=%s\n",sq->answer);
 }
 
 int stringq_change( string_q *sq, char *question, char *answer ){
-    strcpy(sq->question,question);
-    strcpy(sq->answer,answer);
+
+    snprintf(sq->question, MAX_STRING, "%s", question);
+    snprintf(sq->answer, MAX_STRING, "%s", answer);
     return 0;
 }
 
 int stringq_login( string_q *sq ){
-    char *read_input = fgets(cmdstr,MAX_LINE, ifile);
-    int cch = strlen(read_input);
-    if (cch > 1 && read_input[cch-1] == '\n') {
-      read_input[cch-1] = '\0';
-    }
 
-    if (strcmp(sq->answer,read_input) == 0) {
+  char *line = NULL;
+  size_t len = 0;
+
+  if (getline(&line, &len, ifile) == -1) {
+    return -1;
+  }
+
+  if (!(strcspn(line, "\n") == 0)) {
+    line[strcspn(line, "\n")] = 0;
+  }
+
+    if (strncmp(sq->answer,line, MAX_STRING) == 0) {
       return 0;
     }
     else {
@@ -625,9 +667,9 @@ int main( int argc, char *argv[] )
   FILE *file;
   char *line = (char *)NULL;
   int cmd;
-  char *args;
+  char *cmdstr, *args;
   int res;
-  int len = MAX_LINE;
+  size_t len = MAX_LINE;
   char user_index_str[MAX_STRING];
 	
   // check usage
@@ -651,13 +693,12 @@ int main( int argc, char *argv[] )
   // get input - line-by-line from the input file
   // get input - line-by-line from the input file
 
-  line = (char *) malloc(MAX_LINE);
-  while (1) {  // TBD (1): get a line of input from the input file
+  // line = (char *) malloc(MAX_LINE);
+  while (getline(&line, &len, ifile) != -1) {  // TBD (1): get a line of input from the input file
 
-    bzero(line, MAX_LINE);
-    char* status = fgets(line, len, ifile);
-    if (status == NULL) {
-      break;
+    if (!(strcspn(line, "\n") == 0))
+    {
+      line[strcspn(line, "\n")] = 0;
     }
 
     cmdstr = line;
@@ -688,12 +729,16 @@ int main( int argc, char *argv[] )
     first_space++;
 
     int second_space = first_space;
+    
     while (cmdstr[second_space] != space) {
       second_space++;
     }
+    
+    
+    char command_buff[10];
+    char remaining_buff[30];
 
-    memcpy(user_index_str, cmdstr + first_space, second_space - first_space);
-
+    sscanf(cmdstr, "%s" "%s" "%s", command_buff, user_index_str, remaining_buff);
     
 
 
@@ -714,6 +759,12 @@ int main( int argc, char *argv[] )
     }
     
     res = apply_command( user, cmd, args );
+
+    if (res < 0 && user==NULL)
+    {
+      fprintf(ofile, "ERR: failed command: cmd %d for %s(%s) for line %s\n", cmd, args, user_index_str, line);
+      continue;
+    }
 	  
     if ( res < 0 ) {
       fprintf( ofile, "ERR: failed command: cmd %d for %s(%d) for line %s\n", cmd, user->name, user->id, line );
@@ -721,6 +772,6 @@ int main( int argc, char *argv[] )
     }
     // break;
   }
-  free(line);
+
   exit( 0 );
 }
