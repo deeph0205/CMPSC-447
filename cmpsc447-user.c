@@ -225,12 +225,12 @@ USER_NEW, which creates a user object.
 
 int apply_command( user_t *user, int cmd, char *args )
 {
-  char arg1[MAX_STRING], arg2[MAX_STRING], arg3[MAX_STRING], arg4[MAX_STRING];
+  char *arg1, *arg2, *arg3, *arg4;
   int res;
   
   switch( cmd ) {
   case USER_NEW:
-    if (( sscanf( args, "%s", arg1 )) != 1 ) {
+    if (( sscanf( args, "%ms", &arg1 )) != 1 ) {
 	return -1;
     }
     res = (( user != NULL ) ? 0 : -1 );
@@ -245,7 +245,7 @@ int apply_command( user_t *user, int cmd, char *args )
     return res;
     break;
   case USER_ADD:
-    if (( sscanf( args, "%s %s %s %s", arg1, arg2, arg3, arg4 )) != 4 ) {
+    if (( sscanf( args, "%ms %ms %ms %ms", &arg1, &arg2, &arg3, &arg4 )) != 4 ) {
 	return -1;
     }
     res = user->add_q( user, arg1, arg2, arg3, arg4 );
@@ -253,7 +253,7 @@ int apply_command( user_t *user, int cmd, char *args )
     return res;
     break;
   case USER_REMOVE:
-    if (( sscanf( args, "%s", arg1 )) != 1 ) {
+    if (( sscanf( args, "%ms", &arg1 )) != 1 ) {
 	return -1;
     }
     res = user->remove_q( user, arg1 );
@@ -261,7 +261,7 @@ int apply_command( user_t *user, int cmd, char *args )
     return res;
     break;
   case USER_CHANGE:
-    if (( sscanf( args, "%s %s %s", arg1, arg2, arg3 )) != 3 ) {
+    if (( sscanf( args, "%ms %ms %ms", &arg1, &arg2, &arg3 )) != 3 ) {
 	return -1;
     }
     res = user->change_q( user, arg1, arg2, arg3 );
@@ -269,7 +269,7 @@ int apply_command( user_t *user, int cmd, char *args )
     return res;
     break;
   case USER_LINK:
-    if (( sscanf( args, "%s %s", arg1, arg2 )) != 2 ) {
+    if (( sscanf( args, "%ms %ms", &arg1, &arg2 )) != 2 ) {
 	return -1;
     }
     res = user->link_q( user, arg1, arg2 );
@@ -277,7 +277,7 @@ int apply_command( user_t *user, int cmd, char *args )
     return res;
     break;
   case USER_LOGIN:
-    if (( sscanf( args, "%s", arg1 )) != 1 ) {
+    if (( sscanf( args, "%ms", &arg1 )) != 1 ) {
 	return -1;
     }
     res = user->login( user, arg1 );
@@ -707,7 +707,7 @@ int main( int argc, char *argv[] )
   char *cmdstr, *args;
   int res;
   size_t len = MAX_LINE;
-  char user_index_str[MAX_STRING];
+  char *user_index_str;
 	
   // check usage
   if ( argc != 3 ) {
@@ -756,26 +756,31 @@ int main( int argc, char *argv[] )
 
 
     // get the user object
-    
-
+    int i;
     int first_space = 0;
-    char space = ' ';
-    while (cmdstr[first_space] != space) {
-      first_space++;
+    for (i = 0; i < strlen(cmdstr); i++)
+    {
+      if (cmdstr[i] == ' ')
+      {
+        first_space = i;
+        break;
+      }
     }
-    first_space++;
 
-    int second_space = first_space;
-    
-    while (cmdstr[second_space] != space) {
-      second_space++;
+    int second_space = 0;
+    for (int i = first_space + 1; i < strlen(cmdstr); i++)
+    {
+      if (cmdstr[i] == ' ')
+      {
+        second_space = i;
+        break;
+      }
     }
     
-    
-    char command_buff[10];
-    char remaining_buff[30];
+    char *command_buff;
+    char *remaining_buff;
 
-    sscanf(cmdstr, "%s" "%s" "%s", command_buff, user_index_str, remaining_buff);
+    sscanf(cmdstr, "%ms" "%ms" "%ms", &command_buff, &user_index_str, &remaining_buff);
     
 
 
