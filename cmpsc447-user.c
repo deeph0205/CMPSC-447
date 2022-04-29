@@ -72,6 +72,9 @@ user_t *system_user_new( char *user_index_str, char *name )
     return (user_t *) NULL;
   }
 
+  if (user_index_str == (char *) NULL) {
+    return (user_t *) NULL;
+  }
   if (atoi(user_index_str) < 0) {
     return (user_t *) NULL;
   }
@@ -188,6 +191,10 @@ find_user find the user correpsonding to the index value from
 
 user_t *find_user( char *user_index_str, int cmd )
 {
+
+  if (user_index_str == (char *) NULL) {
+    return (user_t *) NULL;
+  }  
 
   if (atoi(user_index_str) < 0) {
     return (user_t *) NULL;
@@ -337,6 +344,10 @@ int user_add_q( user_t *user, char *question_index, char *question_type, char *q
       return -1;
     }
 
+    if (question_index == (char *) NULL) {
+      return -1;
+    }
+
     if (atoi(question_index) < 0) {
       return -1;
     }
@@ -379,6 +390,10 @@ int user_add_q( user_t *user, char *question_index, char *question_type, char *q
         question_struct->change=intq_change;
         question_struct->link=question_link;
         question_struct->login=intq_login;
+
+        if (answer == (char *) NULL) {
+          return -1;
+        }
     
         int answer_int=atoi(answer);
         
@@ -390,6 +405,10 @@ int user_add_q( user_t *user, char *question_index, char *question_type, char *q
 
 }
 int user_remove_q( user_t *user, char *question_index ){
+
+    if (question_index == (char *) NULL) {
+      return -1;
+    }
 
     if (atoi(question_index) < 0) {
       return -1;
@@ -414,6 +433,11 @@ int user_remove_q( user_t *user, char *question_index ){
 
 }
 int user_change_q( user_t *user, char *question_index, char *question, char *answer ){
+    
+    if (question_index == (char *) NULL) {
+      return -1;
+    }
+    
     if (atoi(question_index) < 0) {
       return -1;
     }
@@ -436,6 +460,10 @@ int user_change_q( user_t *user, char *question_index, char *question, char *ans
     // Int change
     else{
         int_q *question_int=(int_q *)user->questions[question_index_int-1];
+
+        if (answer == (char *) NULL) {
+          return -1;
+        }
         int answer_int=atoi(answer);
         question_int->change(question_int,question,answer_int);
     }
@@ -443,6 +471,14 @@ int user_change_q( user_t *user, char *question_index, char *question, char *ans
 }
 int user_link_q( user_t *user, char *question_index, char *other_question_index ){
     
+    if (question_index == (char *) NULL) {
+      return -1;
+    }
+
+    if (other_question_index == (char *) NULL) {
+      return -1;
+    }
+
     if (atoi(question_index) < 0) {
       return -1;
     }
@@ -477,6 +513,10 @@ int user_link_q( user_t *user, char *question_index, char *other_question_index 
 
 }
 int user_login( user_t *user, char *question_index ){
+
+    if (question_index == (char *) NULL) {
+      return -1;
+    }
 
     if (atoi(question_index) < 0) {
       return -1;
