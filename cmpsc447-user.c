@@ -71,9 +71,18 @@ user_t *system_user_new( char *user_index_str, char *name )
   if (users.userct == MAX_USERS) {
     return (user_t *) NULL;
   }
-  int user_index = atoi(user_index_str);
-  if (users.members[user_index-1]!=(user_t *)NULL){
-    return (user_t *) NULL; 
+
+  if (atoi(user_index_str) < 0) {
+    return (user_t *) NULL;
+  }
+  size_t user_index = atoi(user_index_str);
+
+  for (int i = 0; i < MAX_USERS; i++)
+  {
+    if (users.members[i] != NULL && users.members[i]->id == user_index) 
+    {
+      return (user_t *)NULL; 
+    }
   }
   user_t *new_user = (user_t *) malloc(sizeof(user_t));
 
@@ -179,7 +188,11 @@ find_user find the user correpsonding to the index value from
 
 user_t *find_user( char *user_index_str, int cmd )
 {
-  int user_index = atoi( user_index_str );  // attack
+
+  if (atoi(user_index_str) < 0) {
+    return (user_t *) NULL;
+  }
+  size_t user_index = atoi(user_index_str);
   int i;
 
   if ( user_index > 0 ) {
@@ -323,7 +336,11 @@ int user_add_q( user_t *user, char *question_index, char *question_type, char *q
     if (user->qct==MAX_QUESTIONS){
       return -1;
     }
-    int question_index_int = atoi(question_index);
+
+    if (atoi(question_index) < 0) {
+      return -1;
+    }
+    size_t question_index_int = atoi(question_index);
 
     if (question_index_int > MAX_QUESTIONS || question_index_int < 1) {
       return -1;
@@ -373,7 +390,11 @@ int user_add_q( user_t *user, char *question_index, char *question_type, char *q
 
 }
 int user_remove_q( user_t *user, char *question_index ){
-    int question_index_int=atoi(question_index);
+
+    if (atoi(question_index) < 0) {
+      return -1;
+    }
+    size_t question_index_int = atoi(question_index);
 
     if (question_index_int > MAX_QUESTIONS || question_index_int < 1) {
       return -1;
@@ -393,7 +414,10 @@ int user_remove_q( user_t *user, char *question_index ){
 
 }
 int user_change_q( user_t *user, char *question_index, char *question, char *answer ){
-    int question_index_int=atoi(question_index);
+    if (atoi(question_index) < 0) {
+      return -1;
+    }
+    size_t question_index_int = atoi(question_index);
 
     if (question_index_int > MAX_QUESTIONS || question_index_int < 1) {
       return -1;
@@ -418,8 +442,17 @@ int user_change_q( user_t *user, char *question_index, char *question, char *ans
     return 0;
 }
 int user_link_q( user_t *user, char *question_index, char *other_question_index ){
-    int question_index_int=atoi(question_index);
-    int other_question_index_int=atoi(other_question_index);
+    
+    if (atoi(question_index) < 0) {
+      return -1;
+    }
+    
+    size_t question_index_int = atoi(question_index);
+
+    if (atoi(other_question_index) < 0) {
+      return -1;
+    }
+    size_t other_question_index_int = atoi(other_question_index);
 
     if (question_index_int > MAX_QUESTIONS || question_index_int < 1 || other_question_index_int > MAX_QUESTIONS || other_question_index_int < 1) {
       return -1;
@@ -445,7 +478,11 @@ int user_link_q( user_t *user, char *question_index, char *other_question_index 
 }
 int user_login( user_t *user, char *question_index ){
 
-    int question_index_int=atoi(question_index);
+    if (atoi(question_index) < 0) {
+      return -1;
+    }
+    size_t question_index_int = atoi(question_index);
+
     int first_q = 100;
 
     if (question_index_int > MAX_QUESTIONS || question_index_int < 1) {
